@@ -2,3 +2,7 @@ DrissionPage
 pandas
 tqdm
 openpyxl
+random
+time
+logging
+urllib
