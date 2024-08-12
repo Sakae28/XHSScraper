@@ -19,6 +19,7 @@ This project is inspired by [DrissionPage](https://github.com/g1879/DrissionPage
 │   ├── utils.py       # several sub functions
 │   └── _init_.py
 ├── requires.txt       # pip install -r requires.txt
+├── test.py            # run the test script
 ├── LICENSE
 ├── .gitignore
 └── readme.md		
