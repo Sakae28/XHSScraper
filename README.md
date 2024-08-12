@@ -1,3 +1,7 @@
+# XHSScraper
+
+XHSScraper is a Python package to scrape KOL information from 小红书.
+
 # Introduction
 
 This project is inspired by [DrissionPage](https://github.com/g1879/DrissionPage) which is a very user-friendly and easy-to-handle tool. The functionality of this package is not yet comprehensive, but will be improved over time.
