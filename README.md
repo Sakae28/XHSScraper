@@ -87,4 +87,40 @@ For an alternative installation method, clone the source code from the project r
     venv\Scripts\activate
     ```
 
+# Prerequisites
 
+1. Make sure you already have the app “小红书” in your phone because it needs you to scan the QR code for the first time.
+2. Edit `config.py`
+    
+    ```python
+    # Configuration for XHSScraper
+    
+    # URLs
+    LOGIN_URL = 'https://www.xiaohongshu.com/explore'
+    SEARCH_URL_TEMPLATE = 'https://www.xiaohongshu.com/search_result?keyword='
+    
+    # Default settings. You could edit it or keep the default value.
+    DEFAULT_WAIT_TIME = 20
+    DEFAULT_CRAWL_TIMES = 5
+    
+    # Logging configuration
+    LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    LOG_LEVEL = 'DEBUG'
+    
+    # User input. MUST CHANGE BEFORE RUNNING
+    # Make sure the name is correct and can be searched
+    KEYWORD = "麦当劳" 
+    ```
+    
+3. Install required packages
+    
+    Open CMD/Terminal, key in below command:
+    
+    `pip install -r requires.txt`
+    
+
+# Run the script
+
+Open CMD/Terminal, key in below command:
+
+`python XHSScraper.py`
