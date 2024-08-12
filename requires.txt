@@ -1,7 +1,7 @@
 DrissionPage
 pandas
 tqdm
-openpyxl
+os
 random
 time
 logging
