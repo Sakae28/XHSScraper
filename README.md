@@ -1,7 +1,5 @@
-# XHSScraper
-XHSScraper is a Python package to scrape KOL information from Xiaohongshu.
+# Introduction
 
-# Before start
 This project is inspired by [DrissionPage](https://github.com/g1879/DrissionPage) which is a very user-friendly and easy-to-handle tool. The functionality of this package is not yet comprehensive, but will be improved over time.
 
 | Functions | Status | Future Plan |
@@ -11,81 +9,42 @@ This project is inspired by [DrissionPage](https://github.com/g1879/DrissionPage
 | Get detailed stats from posts | In Progress |  |
 | Get all the replies from posts | In Progress |  |
 
-# **Installation**
+# File Structure
 
-The `XHSSraper` script can be installed using two methods:
+```
+.          
+├── XHSScraper
+│   ├── scraper.py     # main script
+│   ├── config.py      # configuration, you have to change this file!
+│   ├── utils.py       # several sub functions
+│   └── _init_.py
+├── requires.txt       # pip install -r requires.txt
+├── LICENSE
+├── .gitignore
+└── readme.md		
+```
 
-- **Using pip**
+# Installation
 
-It is the preferred method for installing it. 
-
-1. **Create a virtual environment (Recommended):**
+- Cloning the Repository
     
-    ```
-    python3 -m venv venv
-    ```
+    To use this package, you can clone the repository directly from GitHub:
     
-    This creates a virtual environment named `venv` to isolate project dependencies from your system-wide Python installation (**recommended**).
-    
-2. **Activate the virtual environment:**
-    
-    **Linux/macOS:**
-    
-    ```
-    source venv/bin/activate
+    ```bash
+    git clone https://github.com/Sakae28/XHSScraper.git
     ```
     
-    **Windows:**
+    Then, navigate to the directory and install the required dependencies:
     
-    ```
-    venv\Scripts\activate
-    ```
-    
-3. **Install using pip:**
-    
-    ```
-    pip install XHSScraper
-    ```
-    
-    This will download and install the `XHSScraper` package and its dependencies into your Python environment.
-    
-- **Manual Installation**
-
-For an alternative installation method, clone the source code from the project repository and install it manually.
-
-1. **Clone the repository:**
-    
-    ```
-    git clone https://github.com/Sakae28/XHSScraper
-    ```
-    
-2. **Navigate to the project directory:**
-    
-    ```
+    ```bash
     cd XHSScraper
+    pip install -r requires.txt
     ```
     
-3. **Create a virtual environment (Recommended):**
+- Manual Installation
     
-    ```
-    python3 -m venv venv
-    ```
+    If you prefer, you can also manually copy the files to your project directory.
     
-    This creates a virtual environment named `venv` to isolate project dependencies from your system-wide Python installation (**recommended**).
-    
-4. **Activate the virtual environment:**
-    
-    **Linux/macOS:**
-    
-    ```
-    source venv/bin/activate
-    ```
-    
-    **Windows:**
-    
-    ```
-    venv\Scripts\activate
-    ```
 
 # Prerequisites
 
@@ -111,16 +70,20 @@ For an alternative installation method, clone the source code from the project r
     # Make sure the name is correct and can be searched
     KEYWORD = "麦当劳" 
     ```
-    
-3. Install required packages
-    
-    Open CMD/Terminal, key in below command:
-    
-    `pip install -r requires.txt`
-    
+
 
 # Run the script
 
-Open CMD/Terminal, key in below command:
+Run the `test.py` in your Python compiler.
 
-`python XHSScraper.py`
+```python
+from XHSScraper.scraper import XHSScraper
+from XHSScraper.config import KEYWORD, DEFAULT_CRAWL_TIMES, DEFAULT_WAIT_TIME, LOG_FORMAT, LOG_LEVEL, LOGIN_URL, SEARCH_URL_TEMPLATE
+
+xhs = XHSScraper()
+xhs.get_data(KEYWORD)
+```
+
+# Contributing
+
+Contributions are welcome! If you find a bug or have a feature request, please open an issue. If you want to contribute code, please fork the repository and submit a pull request.
