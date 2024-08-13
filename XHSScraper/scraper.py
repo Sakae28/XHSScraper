@@ -13,6 +13,7 @@ class XHSScraper:
         self.logger = setup_logging(LOG_FORMAT, LOG_LEVEL)       
     
 
+
     def _perform_login(self):
         self.page = ChromiumPage()
         self.page.get(LOGIN_URL)
@@ -23,31 +24,41 @@ class XHSScraper:
             self.logger.info("Already logged in.")
 
 
+
     def search(self, keyword_encoded):
         self.page.get(SEARCH_URL_TEMPLATE + keyword_encoded)
 
 
     def extract_user_info(self):
         # Basic profile
-        username = self.page.ele('.user-name').text
-        userupdate = self.page.ele('.user-tag').text
-        userid = self.page.ele('.user-desc').text
-        userid = userid.replace('小红书号：', '')
-
         container = self.page.ele('.onebox')
-        userlink = container.ele('tag:a').link
-        userdesc = self.page.eles('.user-desc-box')
-        # below are updated
-        if len(userdesc) > 2:
-            usertype = userdesc[0].text
-            usernote = userdesc[2].text
-        else:
-            usertype = ''
-            usernote = userdesc[1].text
+        if container:
+            username = self.page.ele('.user-name').text
+            userupdate = self.page.ele('.user-tag').text
+            userid = self.page.ele('.user-desc').text
+            userid = userid.replace('小红书号：', '')
+            userlink = container.ele('tag:a').link
+            userdesc = self.page.eles('.user-desc-box')
+            # may have different situation
+            if len(userdesc) > 2:
+                usertype = userdesc[0].text
+                usernote = userdesc[2].text
+            else:
+                usertype = ''
+                usernote = userdesc[1].text
             usernote = usernote.replace('笔记・', '')
+        else:
+            self.logger.info("Cannot be searched. Please check the keyword.")
+            username, userupdate, userid, userlink, usernote, usertype = '', '', '', '', '', ''
         return username, userupdate, userid, userlink, usernote, usertype
 
+
+
     def extract_additional_info(self, userlink):
+        # Check if userlink is valid
+        if not userlink:
+            self.logger.info("User link is invalid, skipping additional info extraction.")
+            return '', '', '', '', '', ''
         # Additional profile
         self.page2 = ChromiumPage()
         self.page2.get(userlink)
@@ -63,6 +74,8 @@ class XHSScraper:
 
         return avatar, usertags, usersign, follower, fans, like_collect
 
+
+
     def extract_user_tags(self):
         user_tags = self.page2.eles('.tag-item')
         tag_str = ''
@@ -76,7 +89,6 @@ class XHSScraper:
                 gender_str = gender_element.replace('#', '') if gender_element else ''
                 
                 if len(user_tags) > 1:
-                    # Join all the tags together
                     tag_str = ' | '.join([tag.text for tag in user_tags[1:]])
                     tag_str = f"{gender_str} | {tag_str}" if gender_str else tag_str # Join all the tags together
                 else:
@@ -86,6 +98,7 @@ class XHSScraper:
                 tag_str = ' | '.join([tag.text for tag in user_tags])
         
         return tag_str
+
 
 
     def combine_kol_info(self):
@@ -109,9 +122,11 @@ class XHSScraper:
         kol_info = pd.DataFrame(kol_info, index=[0])
         return kol_info
 
+
+
     def get_post_info(self, page):
         # Retrieve each post
-        sections = page.eles('.note-item')
+        sections = page.eles('.note-item') if page else []
         post_data = []
 
         for session in sections:
@@ -126,12 +141,24 @@ class XHSScraper:
 
         return post_data
 
-    def page_scroll_down(self, page):
-        wait_random_time()
-        page.scroll.to_bottom()
 
+    
+    def page_scroll_down(self, page):
+        # Scroll down the page
+        if page:
+            wait_random_time()
+            page.scroll.to_bottom()
+
+
+    
     def craw(self, times):
+        # Crawl the posts
         all_posts = []
+
+        if not self.page2:
+            self.logger.error("User profile link is not initialized or keyword search returned no results.")
+            return pd.DataFrame(columns=['post_link', 'post_title', 'post_like']) # Return an empty DataFrame
+
         for _ in tqdm(range(times)):
             post_info = self.get_post_info(self.page2)
             all_posts.extend(post_info)
@@ -140,14 +167,20 @@ class XHSScraper:
         df = pd.DataFrame(all_posts, columns=['post_link', 'post_title', 'post_like'])
         return df
 
+
+
     def run(self, times, keyword_encoded):
+        # Run the whole process
         self._perform_login()
         self.search(keyword_encoded)
         kol_combined_info = self.combine_kol_info()
         result_df = self.craw(times)
         return kol_combined_info, result_df
 
+
+
     def get_data(self, keyword):
+        # Get the data and save it to an Excel file
         keyword_encoded = encode_keyword(keyword)
         kol_combined_info, result_df = self.run(DEFAULT_CRAWL_TIMES, keyword_encoded) # Default is 5. Be free to change it.
         with pd.ExcelWriter(f'{keyword}_{time.strftime("%Y-%m-%d")}.xlsx') as writer:
