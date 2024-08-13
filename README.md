@@ -53,8 +53,9 @@ This project is inspired by [DrissionPage](https://github.com/g1879/DrissionPage
 
 # Prerequisites
 
-1. Make sure you already have the app “小红书” in your phone because it needs you to scan the QR code for the first time.
-2. Edit `config.py`
+1. Chrome browser is necessary.
+2. Make sure you already have the app “小红书” in your phone because it needs you to scan the QR code for the first time.
+3. Edit `config.py`
     
     ```python
     # Configuration for XHSScraper
