@@ -6,12 +6,20 @@ XHSScraper is a Python package to scrape KOL information from 小红书.
 
 This project is inspired by [DrissionPage](https://github.com/g1879/DrissionPage) which is a very user-friendly and easy-to-handle tool. The functionality of this package is not yet comprehensive, but will be improved over time.
 
+**THIS IS ONLY FOR LEARNING AND PRACTICING.*
+
 | Functions | Status | Future Plan |
 | --- | --- | --- |
-| Get user’s profile | ✔ | Batch retrieve |
+| Get user’s profile | ✔ |  |
 | Get user’s posts | ✔ | Continue from where you last stopped |
+| Get notes related to keyword | ✔ |  |
 | Get detailed stats from posts | In Progress |  |
 | Get all the replies from posts | In Progress |  |
+
+# Updates
+
+- The `KEYWORD` now is set to a list. You can retrieve multiple users' profiles and posts in batches.
+- Add a new function: if the user is not found, the tool will extract notes related to the keyword and store them in the `note_list`.
 
 # File Structure
 
