@@ -12,5 +12,6 @@ DEFAULT_CRAWL_TIMES = 5
 LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 LOG_LEVEL = 'DEBUG'
 
-# User input
-KEYWORD = "南北芝麻糊"
+# User input. MUST CHANGE BEFORE RUNNING
+# CANNOT BE EMPTY
+KEYWORD = ['麦当劳', '索尼'] 
