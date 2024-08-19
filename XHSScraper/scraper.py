@@ -8,16 +8,17 @@ from .utils import setup_logging, wait_random_time, encode_keyword
 
 class XHSScraper:
     def __init__(self):
-        self.page = None
-        self.page2 = None
+        self.loginpage = None
+        self.searchpage = None
+        self.userpage = None
         self.logger = setup_logging(LOG_FORMAT, LOG_LEVEL)       
     
 
 
     def _perform_login(self):
-        self.page = ChromiumPage()
-        self.page.get(LOGIN_URL)
-        if self.page.ele('.login-container'):  # only first time 
+        self.loginpage = ChromiumPage()
+        self.loginpage.get(LOGIN_URL)
+        if self.loginpage.ele('.login-container'):  # only first time 
             self.logger.info("Scan the QR code to login.")
             time.sleep(DEFAULT_WAIT_TIME)
         else:
@@ -26,48 +27,63 @@ class XHSScraper:
 
 
     def search(self, keyword_encoded):
-        self.page.get(SEARCH_URL_TEMPLATE + keyword_encoded)
+        search_url = SEARCH_URL_TEMPLATE + keyword_encoded
+        self.searchpage = ChromiumPage()
+        self.searchpage.get(search_url)
+        self.searchpage_url = self.searchpage.url
+
+
+    def check_container(self):
+        container = self.searchpage.ele('.onebox')
+        return container
+
+
+    def diff_line(self, times, container):
+        if container: # if the element exists, it means the keyword is correct
+            kol_info = self.combine_kol_info()
+            userlink = kol_info['user link'][0]
+            note_df = self.crawl_notes(times)
+            post_df = self.crawl_posts(times, userlink)
+        else: # if not, return empty dataframes for kol_info and post_df but still crawl notes
+            kol_info = pd.DataFrame()
+            self.logger.warning("Keyword is not correct. No user found.")
+            note_df = self.crawl_notes(times)
+            post_df = pd.DataFrame()
+            self.logger.warning("No post found.")
+        return kol_info, note_df, post_df
 
 
     def extract_user_info(self):
         # Basic profile
-        container = self.page.ele('.onebox')
-        if container:
-            username = self.page.ele('.user-name').text
-            userupdate = self.page.ele('.user-tag').text
-            userid = self.page.ele('.user-desc').text
-            userid = userid.replace('小红书号：', '')
-            userlink = container.ele('tag:a').link
-            userdesc = self.page.eles('.user-desc-box')
-            # may have different situation
-            if len(userdesc) > 2:
-                usertype = userdesc[0].text
-                usernote = userdesc[2].text
-            else:
-                usertype = ''
-                usernote = userdesc[1].text
-            usernote = usernote.replace('笔记・', '')
+        username = self.searchpage.ele('.user-name').text
+        userupdate = self.searchpage.ele('.user-tag').text
+        userid = self.searchpage.ele('.user-desc').text
+        userid = userid.replace('小红书号：', '')
+        userlink = self.searchpage.ele('.onebox').ele('tag:a').link
+        userdesc = self.searchpage.eles('.user-desc-box')
+        # may have different situation
+        if len(userdesc) > 2:
+            usertype = userdesc[0].text
+            usernote = userdesc[2].text
         else:
-            self.logger.info("Cannot be searched. Please check the keyword.")
-            username, userupdate, userid, userlink, usernote, usertype = '', '', '', '', '', ''
-        return username, userupdate, userid, userlink, usernote, usertype
+            usertype = ''
+            usernote = userdesc[1].text
+        usernote = usernote.replace('笔记・', '')
 
-
+        return username, userupdate, userid, userlink, usernote, usertype   
+            
+        
 
     def extract_additional_info(self, userlink):
-        # Check if userlink is valid
-        if not userlink:
-            self.logger.info("User link is invalid, skipping additional info extraction.")
-            return '', '', '', '', '', ''
         # Additional profile
-        self.page2 = ChromiumPage()
-        self.page2.get(userlink)
+        self.userpage = ChromiumPage()
+        self.userpage.get(userlink)
 
-        avatar = self.page2.ele('.avatar-wrapper').ele('tag:img').link
+        avatar = self.userpage.ele('.avatar-wrapper').ele('tag:img').link
         usertags = self.extract_user_tags()
-        usersign = self.page2.ele('.user-desc').text
+        usersign = self.userpage.ele('.user-desc').text
 
-        counts = self.page2.eles('.count')
+        counts = self.userpage.eles('.count')
         follower = counts[0].text
         fans = counts[1].text
         like_collect = counts[2].text
@@ -77,7 +93,7 @@ class XHSScraper:
 
 
     def extract_user_tags(self):
-        user_tags = self.page2.eles('.tag-item')
+        user_tags = self.userpage.eles('.tag-item')
         tag_str = ''
         
         if user_tags:
@@ -126,16 +142,17 @@ class XHSScraper:
 
     def get_post_info(self, page):
         # Retrieve each post
-        sections = page.eles('.note-item') if page else []
+        sections = page.eles('.note-item')
         post_data = []
 
         for session in sections:
             try:
-                note_link = session.ele('tag:a').link
+                note_link = session.ele('.cover ld mask').link
                 footer = session.ele('.footer')
                 title = footer.ele('.title').text
+                username = footer.ele('.name').text
                 like = footer.ele('.like-wrapper like-active').text
-                post_data.append([note_link, title, like])
+                post_data.append([note_link, title, username, like])
             except Exception as e:
                 self.logger.error(f"Error occurred while processing session: {e}")
 
@@ -144,49 +161,77 @@ class XHSScraper:
 
     
     def page_scroll_down(self, page):
-        # Scroll down the page
-        if page:
-            wait_random_time()
-            page.scroll.to_bottom()
+        # Scroll down the searchpage
+        page.set.scroll.smooth(on_off=False) # turn off smooth scroll
+        wait_random_time()
+        page.scroll.to_bottom()
 
 
     
-    def craw(self, times):
-        # Crawl the posts
+    def crawl_notes(self, times):
+        all_notes = []
+
+        # Make sure we start crawling notes on the search searchpage
+        if hasattr(self, 'searchpage_url') and self.searchpage_url:
+            self.searchpage.get(self.searchpage_url)
+        else:
+            self.logger.error("Searchpage URL is not initialized. Please run the search function first.")
+            return None, None
+
+        # Always crawl related notes from search searchpage
+        for _ in tqdm(range(times), desc='Crawling notes'):
+            note_info = self.get_post_info(self.searchpage)
+            all_notes.extend(note_info)
+            self.page_scroll_down(self.searchpage)
+
+        note_df = pd.DataFrame(all_notes, columns=['note_link', 'note_title', 'note_user', 'note_like'])
+        note_df.drop_duplicates(subset=['note_link'], inplace=True)
+
+        return note_df
+
+
+    def crawl_posts(self, times, userlink):
         all_posts = []
 
-        if not self.page2:
-            self.logger.error("User profile link is not initialized or keyword search returned no results.")
-            return pd.DataFrame(columns=['post_link', 'post_title', 'post_like']) # Return an empty DataFrame
-
-        for _ in tqdm(range(times)):
-            post_info = self.get_post_info(self.page2)
+        # If the keyword is correct, crawl the user's posts
+        self.userpage.get(userlink)
+        for _ in tqdm(range(times), desc='Crawling posts'):
+            post_info = self.get_post_info(self.userpage)
             all_posts.extend(post_info)
-            self.page_scroll_down(self.page2)
+            self.page_scroll_down(self.userpage)
+        
+        post_df = pd.DataFrame(all_posts, columns=['post_link', 'post_title', 'post_user', 'post_like'])
+        post_df.drop_duplicates(subset=['post_link'], inplace=True)
 
-        df = pd.DataFrame(all_posts, columns=['post_link', 'post_title', 'post_like'])
-        return df
+        return post_df
 
 
 
-    def run(self, times, keyword_encoded):
-        # Run the whole process
+    def run(self, keyword_encoded):
         self._perform_login()
         self.search(keyword_encoded)
-        kol_combined_info = self.combine_kol_info()
-        result_df = self.craw(times)
-        return kol_combined_info, result_df
+        container = self.check_container()
+        kol_combined_info, note_df, post_df = self.diff_line(DEFAULT_CRAWL_TIMES, container)
+        return kol_combined_info, note_df, post_df
 
 
 
     def get_data(self, keyword):
         # Get the data and save it to an Excel file
-        keyword_encoded = encode_keyword(keyword)
-        kol_combined_info, result_df = self.run(DEFAULT_CRAWL_TIMES, keyword_encoded) # Default is 5. Be free to change it.
-        with pd.ExcelWriter(f'{keyword}_{time.strftime("%Y-%m-%d")}.xlsx') as writer:
-            kol_combined_info.to_excel(writer, sheet_name='kol_info', index=False)
-            result_df.to_excel(writer, sheet_name='post_info', index=False)
-        print("Crawling finished. Data saved.")
+        if not keyword:
+            self.logger.error("Keyword list is empty. Exiting the process.")
+            return None
+        
+        for kw in keyword:
+            keyword_encoded = encode_keyword(kw)
+            kol_combined_info, note_df, post_df = self.run(keyword_encoded)
+            filename = f'{kw}_{time.strftime("%Y-%m-%d")}.xlsx'
+            with pd.ExcelWriter(filename) as writer:
+                kol_combined_info.to_excel(writer, sheet_name='kol_info', index=False)
+                note_df.to_excel(writer, sheet_name='note_list', index=False)
+                post_df.to_excel(writer, sheet_name='post_list', index=False)
+        
+            print(f"Crawling finished for {kw}. Data saved.")
 
 
     
