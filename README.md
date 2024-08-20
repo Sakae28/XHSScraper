@@ -1,6 +1,6 @@
 # XHSScraper
 
-XHSScraper is a Python package to scrape KOL information from 小红书.
+XHSScraper is a Python package to scrape user profile, posts and replies from 小红书.
 
 # Introduction
 
@@ -82,7 +82,7 @@ This project is inspired by [DrissionPage](https://github.com/g1879/DrissionPage
     
     # User input. MUST CHANGE BEFORE RUNNING
     # Make sure the name is correct and can be searched
-    KEYWORD = "麦当劳" 
+    KEYWORD = ["麦当劳", "索尼"]
     ```
 
 
