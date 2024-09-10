@@ -20,6 +20,7 @@ This project is inspired by [DrissionPage](https://github.com/g1879/DrissionPage
 
 - The `KEYWORD` now is set to a list. You can retrieve multiple users' profiles and posts in batches.
 - Add a new function: if the user is not found, the tool will extract notes related to the keyword and store them in the `note_list`.
+- Add a switch mode. You can determine whether to turn it on to get extra information of posts or notes.
 
 # File Structure
 
@@ -36,6 +37,10 @@ This project is inspired by [DrissionPage](https://github.com/g1879/DrissionPage
 ├── .gitignore
 └── readme.md		
 ```
+
+# Reminder
+
+The overall crawling time depends on the number of pages to be crawled and whether the additional information mode is enabled. The more pages there are, the longer the crawling time will be; if the additional information mode is enabled, it will also significantly increase the crawling time.
 
 # Installation
 
@@ -83,6 +88,11 @@ This project is inspired by [DrissionPage](https://github.com/g1879/DrissionPage
     # User input. MUST CHANGE BEFORE RUNNING
     # Make sure the name is correct and can be searched
     KEYWORD = ["麦当劳", "索尼"]
+
+    # Switch the mode to decide whether to crawl extra info for notes and posts
+    # Default is False. Turn it to True to get extra info.
+    EXTRA_NOTE_INFO = False
+    EXTRA_POST_INFO = False
     ```
 
 
@@ -92,10 +102,20 @@ Run the `test.py` in your Python compiler.
 
 ```python
 from XHSScraper.scraper import XHSScraper
-from XHSScraper.config import KEYWORD, DEFAULT_CRAWL_TIMES, DEFAULT_WAIT_TIME, LOG_FORMAT, LOG_LEVEL, LOGIN_URL, SEARCH_URL_TEMPLATE
+from XHSScraper.config import (
+    LOGIN_URL,
+    SEARCH_URL_TEMPLATE,
+    DEFAULT_WAIT_TIME,
+    DEFAULT_CRAWL_TIMES,
+    LOG_FORMAT,
+    LOG_LEVEL,
+    KEYWORD,
+    EXTRA_NOTE_INFO,
+    EXTRA_POST_INFO
+)
 
 xhs = XHSScraper()
-xhs.get_data(KEYWORD)
+xhs.get_data(KEYWORD, EXTRA_NOTE_INFO, EXTRA_POST_INFO)
 ```
 
 # Contributing
