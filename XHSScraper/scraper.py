@@ -3,7 +3,17 @@ import pandas as pd
 from tqdm import tqdm
 import time
 from DrissionPage import ChromiumPage
-from .config import LOGIN_URL, SEARCH_URL_TEMPLATE, DEFAULT_WAIT_TIME, DEFAULT_CRAWL_TIMES, LOG_FORMAT, LOG_LEVEL, KEYWORD
+from .config import (
+    LOGIN_URL,
+    SEARCH_URL_TEMPLATE,
+    DEFAULT_WAIT_TIME,
+    DEFAULT_CRAWL_TIMES,
+    LOG_FORMAT,
+    LOG_LEVEL,
+    KEYWORD,
+    EXTRA_NOTE_INFO,
+    EXTRA_POST_INFO
+)
 from .utils import setup_logging, wait_random_time, encode_keyword
 
 class XHSScraper:
@@ -11,6 +21,7 @@ class XHSScraper:
         self.loginpage = None
         self.searchpage = None
         self.userpage = None
+        self.detailpage = None
         self.logger = setup_logging(LOG_FORMAT, LOG_LEVEL)       
     
 
@@ -215,8 +226,34 @@ class XHSScraper:
         return kol_combined_info, note_df, post_df
 
 
+    def get_note_post_detail(self, row):
+        self.detailpage = ChromiumPage()
+    
+        # get note_link or post_link
+        link = row.get('note_link') or row.get('post_link')
+        if not link:
+            return pd.Series([None]*5, index=['date', 'collect', 'comment', 'desc', 'hashtag'])
+        
+        self.detailpage.get(link)
+        date = self.detailpage.ele('.date').text
+        collect = self.detailpage.ele('.collect-wrapper').ele('.count').text
+        collect = "0" if collect == '收藏' else collect
+        comment = self.detailpage.ele('.chat-wrapper').ele('.count').text
+        comment = "0" if collect == '评论' else comment
+        desc = self.detailpage.ele('tag:div@class=desc').ele('tag:span').text
+        desc = desc.replace("\n", "")
 
-    def get_data(self, keyword):
+        # process hashtags and description
+        hashtags = self.detailpage.eles('#hash-tag')
+        if hashtags:
+            hashtag = ' '.join([tag.text for tag in hashtags]).replace("\n", "")
+        else:
+            hashtag = ''
+        
+        return pd.Series([date, collect, comment, desc, hashtag], index=['date', 'collect', 'comment', 'desc', 'hashtag'])
+
+
+    def get_data(self, keyword, extra_note_info, extra_post_info):
         # Get the data and save it to an Excel file
         if not keyword:
             self.logger.error("Keyword list is empty. Exiting the process.")
@@ -225,6 +262,14 @@ class XHSScraper:
         for kw in keyword:
             keyword_encoded = encode_keyword(kw)
             kol_combined_info, note_df, post_df = self.run(keyword_encoded)
+            
+            if extra_note_info:
+                self.logger.info("Fetching extra note information...")
+                note_df[['date', 'collect', 'comment', 'desc', 'hashtag']] = note_df.apply(self.get_note_post_detail, axis=1)           
+            if extra_post_info:
+                self.logger.info("Fetching extra post information...")
+                post_df[['date', 'collect', 'comment', 'desc', 'hashtag']] = post_df.apply(self.get_note_post_detail, axis=1)
+            
             filename = f'{kw}_{time.strftime("%Y-%m-%d")}.xlsx'
             with pd.ExcelWriter(filename) as writer:
                 kol_combined_info.to_excel(writer, sheet_name='kol_info', index=False)
@@ -234,8 +279,9 @@ class XHSScraper:
             print(f"Crawling finished for {kw}. Data saved.")
 
 
-    
+
+
 if __name__ == "__main__":
     xhs = XHSScraper()
-    xhs.get_data(KEYWORD)
+    xhs.get_data(KEYWORD, EXTRA_NOTE_INFO, EXTRA_POST_INFO)
 

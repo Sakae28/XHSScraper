@@ -15,3 +15,8 @@ LOG_LEVEL = 'DEBUG'
 # User input. MUST CHANGE BEFORE RUNNING
 # CANNOT BE EMPTY
 KEYWORD = ['麦当劳', '索尼'] 
+
+# Switch the mode to decide whether to crawl extra info for notes and posts
+# Default is False. Turn it to True to get extra info.
+EXTRA_NOTE_INFO = False
+EXTRA_POST_INFO = False
