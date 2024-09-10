@@ -13,7 +13,7 @@ This project is inspired by [DrissionPage](https://github.com/g1879/DrissionPage
 | Get user’s profile | ✔ |  |
 | Get user’s posts | ✔ | Continue from where you last stopped |
 | Get notes related to keyword | ✔ |  |
-| Get detailed stats from posts | In Progress |  |
+| Get detailed stats from posts | ✔ |  |
 | Get all the replies from posts | In Progress |  |
 
 # Updates
