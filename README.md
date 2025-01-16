@@ -1,6 +1,6 @@
 # XHSScraper
 
-XHSScraper is a Python package to scrape user profile, posts and replies from 小红书.
+XHSScraper is a Python package to scrape user profile, posts and replies from a social media platform 小红书 (Xiao Hong Shu/RedNote) which has the No.1 downloads in the app store now.
 
 # Introduction
 
